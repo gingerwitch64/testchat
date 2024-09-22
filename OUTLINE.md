@@ -1,7 +1,7 @@
 Current thought process/set of ideas for how to go about this:
 ## Client Actions List
 1. Ask the user for a preferred username/alias.
-2. Pseudo-randomly generate a User ID using (a) a __timestamp__ (b) a system __hardware ID__ or output of some kind of system-identifying command and (c) a __randomly generated number__; throw all of these into a String and __hash it__.
+2. ~~Pseudo-randomly generate a User ID using (a) a __timestamp__ (b) a system __hardware ID__ or output of some kind of system-identifying command and (c) a __randomly generated number__; throw all of these into a String and __hash it__~~ Generate a [UUID](https://docs.python.org/3/library/uuid.html).
 3. Send a user initialization request to the server.
 4. If the server returns a __success__, allow the user to __start chatting__; if the server returns an __error__ (either because of a duplicate username or ID), request the user to __re-initialize__.
 5. Messages from the user should be sent to the server; *new* messages from the server will be fetched via a periodic fetching request.
