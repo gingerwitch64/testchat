@@ -1,6 +1,7 @@
 import threading
 import socket
 import socketserver
+import sqlite3
 import sys
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
@@ -8,7 +9,11 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = str(self.request.recv(1024), 'ascii')
         cur_thread = threading.current_thread()
-        response = bytes("{}: {}".format(cur_thread.name, data), 'ascii')
+        print(f"Replying to {} on {cur_thread}", 0)
+        response = bytes(
+                "{}: {}".format(cur_thread.name, data),
+                'ascii'
+                )
         self.request.sendall(response)
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
