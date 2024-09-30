@@ -5,7 +5,8 @@ import socketserver
 import sqlite3
 import sys
 
-dbcon = sqlite3.connect("server.db")
+# Autocommit is enabled due to the proof-of-concept nature of this project
+dbcon = sqlite3.connect("server.db", autocommit=True)
 dbcur = dbcon.cursor()
 
 
