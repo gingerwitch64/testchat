@@ -16,19 +16,29 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
         response = {}
         match data["type"]:
             case "REG" | "REGISTER":
-                if dbcur.execute(
-                        "SELECT UserName FROM users WHERE UserName='?'", data["username"]
-                        ).fetchone() is None:
+                if dbcur.execute("SELECT UserName FROM users WHERE UserName='?'", (data["username"],) ).fetchone() is None:
+                    # TODO: INSERT new UserName and UserID into database
                     response = {
-                        "type": ""
+                        "type": "REG",
+                        "status": 0,
+                    }
+                else:
+                    # TODO: Send different error codes dependent on whether the UserName exists or the UserID exists
+                    response = {
+                        "type": "REG",
+                        "status": 1,
                     }
             case "MSG" | "MESSAGE":
-                response = "PLACEHOLDER"
+                # TODO: Insert message into messages table, only send status 0 on success
+                response = {
+                    "type": "MSG",
+                    "status": 0,
+                }
             case "GET" | "FETCH":
                 response = "PLACEHOLDER"
         cur_thread = threading.current_thread()
         print(f"Replying on {cur_thread}")
-        self.request.sendall(bytes(response, 'utf-8'))
+        self.request.sendall(bytes(json.dumps(response), 'utf-8'))
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
