@@ -13,13 +13,15 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         data = json.loads(str(self.request.recv(1024), 'utf-8'))
-        response = ""
+        response = {}
         match data["type"]:
             case "REG" | "REGISTER":
-                dbcur.execute()
-                response = {
-                    "type": ""
-                }
+                if dbcur.execute(
+                        "SELECT UserName FROM users WHERE UserName='?'", data["username"]
+                        ).fetchone() is None:
+                    response = {
+                        "type": ""
+                    }
             case "MSG" | "MESSAGE":
                 response = "PLACEHOLDER"
             case "GET" | "FETCH":
