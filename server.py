@@ -25,7 +25,8 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                         "status": 0,
                     }
                 else:
-                    # TODO: Send different error codes dependent on whether the UserName exists or the UserID exists
+                    # No matter what, an error code must be sent for either a duplicate UserName OR UserID
+                    # as letting a client know if a UserID is used can be exploited
                     response = {
                         "type": "REG",
                         "status": 1,
