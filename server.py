@@ -4,6 +4,7 @@ import socket
 import socketserver
 import sqlite3
 import sys
+import time
 
 # Autocommit is enabled due to the proof-of-concept nature of this project
 dbcon = sqlite3.connect("server.db", autocommit=True)
@@ -26,10 +27,14 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     "status": (userTaken * 1), # convert the result bool into an integer status code
                 }
             case "MSG" | "MESSAGE":
-                # TODO: Insert message into messages table, only send status 0 on success
+                username = dbcur.execute("SELECT UserName FROM users WHERE UserID='?'", (data["userid"],)).fetchone()
+                useridDNE = username is None
+                if not useridDNE:
+                    username = username[0]
+                    dbcur.execute("INSERT INTO messages VALUES (?, ?, ?)", (int(time.time()), username, data["text"],))
                 response = {
                     "type": "MSG",
-                    "status": 0,
+                    "status": (useridDNE * 1), # if the userid returned no username, return an error
                 }
             case "GET" | "FETCH":
                 response = "PLACEHOLDER"
