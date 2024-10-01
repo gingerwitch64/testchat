@@ -40,13 +40,11 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
 
-def main(arg = sys.argv):
+def main(host="localhost",port=5500):
     dbcur.execute("CREATE TABLE messages ( Timestamp int, UserName varchar(255), Content varchar(255) )")
     dbcur.execute("CREATE TABLE users ( UserID char(32), UserName varchar(255) )")
-    HOST, PORT = "localhost", 0
-    server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRequestHandler)
-    with server:
-        ip, port = server.server_address 
+    server = ThreadedTCPServer((host, port), ThreadedTCPRequestHandler)
+    with server: 
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.daemon = True
         server_thread.start()
