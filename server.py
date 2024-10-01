@@ -17,8 +17,9 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
         response = {}
         match data["type"]:
             case "REG" | "REGISTER":
-                if dbcur.execute("SELECT UserName FROM users WHERE UserName='?'", (data["username"],) ).fetchone() is None:
-                    # TODO: INSERT new UserName and UserID into database
+                usernameAvailable = (dbcur.execute("SELECT UserName FROM users WHERE UserName='?'", (data["username"],)).fetchone() is None)
+                userIDAvailable   = (dbcur.execute("SELECT UserName FROM users WHERE UserID='?'",   (data["userid"],  )).fetchone() is None)
+                if usernameAvailable and userIDAvailable:
                     response = {
                         "type": "REG",
                         "status": 0,
@@ -46,7 +47,7 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 def main(arg = sys.argv):
     dbcur.execute("CREATE TABLE messages ( Timestamp int, UserName varchar(255), Content varchar(255) )")
-    dbcur.execute("CREATE TABLE users ( UserID int, UserName varchar(255) )")
+    dbcur.execute("CREATE TABLE users ( UserID char(32), UserName varchar(255) )")
     HOST, PORT = "localhost", 0
     server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRequestHandler)
     with server:
