@@ -17,20 +17,14 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
         response = {}
         match data["type"]:
             case "REG" | "REGISTER":
-                usernameAvailable = (dbcur.execute("SELECT UserName FROM users WHERE UserName='?'", (data["username"],)).fetchone() is None)
-                userIDAvailable   = (dbcur.execute("SELECT UserName FROM users WHERE UserID='?'",   (data["userid"],  )).fetchone() is None)
-                if usernameAvailable and userIDAvailable:
-                    response = {
-                        "type": "REG",
-                        "status": 0,
-                    }
-                else:
-                    # No matter what, an error code must be sent for either a duplicate UserName OR UserID
-                    # as letting a client know if a UserID is used can be exploited
-                    response = {
-                        "type": "REG",
-                        "status": 1,
-                    }
+                userTaken = not ((dbcur.execute("SELECT UserName FROM users WHERE UserName='?'", (data["username"],)).fetchone() is None)
+                             and (dbcur.execute("SELECT UserName FROM users WHERE UserID='?'",   (data["userid"],  )).fetchone() is None))
+                if not userTaken:
+                    dbcur.execute("INSERT INTO users VALUES (?, ?)", (data["userid"], data["username"],))
+                response = {
+                    "type": "REG",
+                    "status": (userTaken * 1), # convert the result bool into an integer status code
+                }
             case "MSG" | "MESSAGE":
                 # TODO: Insert message into messages table, only send status 0 on success
                 response = {
