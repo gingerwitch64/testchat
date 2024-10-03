@@ -3,7 +3,6 @@ import threading
 import socket
 import socketserver
 import sqlite3
-import sys
 import time
 
 # Autocommit is enabled due to the proof-of-concept nature of this project
@@ -12,7 +11,6 @@ dbcur = dbcon.cursor()
 
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
-
     def handle(self):
         data = json.loads(str(self.request.recv(1024), 'utf-8'))
         response = {}
@@ -37,7 +35,18 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     "status": (useridDNE * 1), # if the userid returned no username, return an error
                 }
             case "GET" | "FETCH":
-                response = "PLACEHOLDER"
+                response = {
+                    "type": "GET",
+                    "messages": [],
+                    "status": 0,
+                }
+                if "since" in data:
+                    response["messages"] = dbcur.execute("SELECT * FROM messages WHERE Timestamp >= ?", data["since"]).fetchall()
+                elif "last" in data:
+                    response["messages"] = dbcur.execute("SELECT * FROM messages ORDER BY Timestamp DESC LIMIT ?", int(data["last"])).fetchall()
+                else:
+                    response["messages"] = dbcur.execute("SELECT * FROM messages ORDER BY Timestamp DESC LIMIT 1").fetchone()
+
         cur_thread = threading.current_thread()
         print(f"Replying on {cur_thread}")
         self.request.sendall(bytes(json.dumps(response), 'utf-8'))
