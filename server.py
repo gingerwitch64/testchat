@@ -14,28 +14,40 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
         dbcon = sqlite3.connect(SQLITE_FILEPATH, autocommit=SQLITE_AUTOCOMMIT)
         dbcur = dbcon.cursor()
+        
         data = json.loads(str(self.request.recv(1024), 'utf-8'))
         response = {}
+
         match data["type"]:
+
             case "REG" | "REGISTER":
                 userTaken = not ((dbcur.execute("SELECT UserName FROM users WHERE UserName=?", (data["username"],)).fetchone() is None)
                              and (dbcur.execute("SELECT UserName FROM users WHERE UserID=?",   (data["userid"],  )).fetchone() is None))
                 if not userTaken:
                     dbcur.execute("INSERT INTO users VALUES (?, ?)", (data["userid"], data["username"],))
+                    print(f"Registered new user: {data["username"]}")
+                else:
+                    print(f"Failed to register new user: {data["username"]}")
                 response = {
                     "type": "REG",
                     "status": (userTaken * 1), # convert the result bool into an integer status code
                 }
+
             case "MSG" | "MESSAGE":
                 username = dbcur.execute("SELECT UserName FROM users WHERE UserID=?", (data["userid"],)).fetchone()
-                useridDNE = username is None
+                useridDNE = username is None # UserID Does Not Exist?
                 if not useridDNE:
                     username = username[0]
-                    dbcur.execute("INSERT INTO messages VALUES (?, ?, ?)", (int(time.time()), username, data["text"],))
+                    timestamp = int(time.time())
+                    dbcur.execute("INSERT INTO messages VALUES (?, ?, ?)", (timestamp, username, data["text"],))
+                    print(f"{timestamp} {username}: '{data["text"]}'")
+                else:
+                    print("MESSAGE failed, UserID is not linked to a UserName.")
                 response = {
                     "type": "MSG",
                     "status": (useridDNE * 1), # if the userid returned no username, return an error
                 }
+
             case "GET" | "FETCH":
                 response = {
                     "type": "GET",
@@ -50,7 +62,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     response["messages"] = dbcur.execute("SELECT * FROM messages ORDER BY Timestamp DESC LIMIT 1").fetchone()
 
         cur_thread = threading.current_thread()
-        print(f"Replying on {cur_thread}")
+        print(f"Replying to {response["type"]} on {cur_thread}")
         self.request.sendall(bytes(json.dumps(response), 'utf-8'))
         dbcon.close()
 
@@ -59,22 +71,26 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 def main(host="localhost",port=5500):
     if not os.path.isfile(SQLITE_FILEPATH):
-        print("")
+        print("Database file does not exist; setting up now...")
         dbcon = sqlite3.connect(SQLITE_FILEPATH, autocommit=SQLITE_AUTOCOMMIT)
         dbcur = dbcon.cursor()
         dbcur.execute("CREATE TABLE messages ( Timestamp int, UserName varchar(255), Content varchar(255) )")
         dbcur.execute("CREATE TABLE users ( UserID char(32), UserName varchar(255) )")
         dbcon.close()
+
     server = ThreadedTCPServer((host, port), ThreadedTCPRequestHandler)
     with server: 
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.daemon = True
         server_thread.start()
-        print("Server loop running in thread:", server_thread.name)
+        
+        print(f"Server loop running in thread: {server_thread.name}")
+        
         shutoff = False
         while not shutoff:
-            prompt = input("Prompt is running")
-            if prompt in ["quit", "exit", "stop", "shutdown"]:
+            prompt = input("Awaiting next prompt...\n")
+            if prompt in ["q", "quit", "exit", "stop", "shutdown"]:
+                print("Shutting down server...")
                 shutoff = True
 
         server.shutdown()
