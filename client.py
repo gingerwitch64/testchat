@@ -10,9 +10,6 @@ class Client:
         self.username = None
         self.uuid = None
 
-        self.connect()
-        self.register()
-
     # Connects client to socket, returns error code
     def connect(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -98,7 +95,7 @@ class Client:
             print(f"Failed to send: {e}")
             return -1
 
-        if response['status'] == 0:
+        if response['status'] == 1:
             print("Fetch request failed")
             return -1
 

@@ -12,6 +12,7 @@ SQLITE_AUTOCOMMIT = True
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
+        print(f"Request recieved from: {self.client_address}")
         dbcon = sqlite3.connect(SQLITE_FILEPATH, autocommit=SQLITE_AUTOCOMMIT)
         dbcur = dbcon.cursor()
         
@@ -59,7 +60,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                 elif "last" in data:
                     response["messages"] = dbcur.execute("SELECT * FROM messages ORDER BY Timestamp DESC LIMIT ?", (int(data["last"]),)).fetchall()
                 else:
-                    response["messages"] = dbcur.execute("SELECT * FROM messages ORDER BY Timestamp DESC LIMIT 1").fetchone()
+                    response["messages"] = dbcur.execute("SELECT * FROM messages ORDER BY Timestamp DESC LIMIT 1").fetchall()
 
         cur_thread = threading.current_thread()
         print(f"Replying to {response["type"]} on {cur_thread}")
@@ -71,7 +72,9 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 def main(host="localhost",port=5500):
     if not os.path.isfile(SQLITE_FILEPATH):
-        print("Database file does not exist; setting up now...")
+        print( "Database file does not exist...\n",
+              f"Setting up \'{SQLITE_FILEPATH}\' now...\n",
+              f"Autocommit is {SQLITE_AUTOCOMMIT}\n")
         dbcon = sqlite3.connect(SQLITE_FILEPATH, autocommit=SQLITE_AUTOCOMMIT)
         dbcur = dbcon.cursor()
         dbcur.execute("CREATE TABLE messages ( Timestamp int, UserName varchar(255), Content varchar(255) )")
