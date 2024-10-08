@@ -83,21 +83,19 @@ def main(host="localhost",port=5500):
         dbcon.close()
 
     server = ThreadedTCPServer((host, port), ThreadedTCPRequestHandler)
-    with server: 
-        server_thread = threading.Thread(target=server.serve_forever)
-        server_thread.daemon = True
-        server_thread.start()
+    server_thread = threading.Thread(target=server.serve_forever)
+    server_thread.daemon = True
+    server_thread.start()
         
-        print(f"Server loop running in thread: {server_thread.name}")
-        
-        shutoff = False
-        while not shutoff:
-            prompt = input("Awaiting next prompt...\n")
-            if prompt in ["q", "quit", "exit", "stop", "shutdown"]:
-                print("Shutting down server...")
-                shutoff = True
+    print(f"Server loop running in thread: {server_thread.name}")
 
-        server.shutdown()
+    shutoff = False
+    while not shutoff:
+        prompt = input("Awaiting next prompt...\n")
+        if prompt in ["q", "quit", "exit", "stop", "shutdown"]:
+            print("Shutting down server...")
+            shutoff = True
+            server.shutdown()
 
 if __name__ == "__main__":
     main()
