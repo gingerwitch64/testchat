@@ -26,9 +26,9 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                              and (dbcur.execute("SELECT UserName FROM users WHERE UserID=?",   (data["userid"],  )).fetchone() is None))
                 if not userTaken:
                     dbcur.execute("INSERT INTO users VALUES (?, ?)", (data["userid"], data["username"],))
-                    print(f"Registered new user: {data["username"]}")
+                    print("Registered new user: ", data["username"])
                 else:
-                    print(f"Failed to register new user: {data["username"]}")
+                    print("Failed to register new user: ", data["username"])
                 response = {
                     "type": "REG",
                     "status": (userTaken * 1), # convert the result bool into an integer status code
@@ -41,7 +41,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     username = username[0]
                     timestamp = int(time.time())
                     dbcur.execute("INSERT INTO messages VALUES (?, ?, ?)", (timestamp, username, data["text"],))
-                    print(f"{timestamp} {username}: '{data["text"]}'")
+                    print(f"{timestamp} {username}: ", {data["text"]})
                 else:
                     print("MESSAGE failed, UserID is not linked to a UserName.")
                 response = {
@@ -63,7 +63,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     response["messages"] = dbcur.execute("SELECT * FROM messages ORDER BY Timestamp DESC LIMIT 1").fetchall()
 
         cur_thread = threading.current_thread()
-        print(f"Replying to {response["type"]} on {cur_thread}")
+        print("Replying to ", response["type"], f" on {cur_thread}")
         self.request.sendall(bytes(json.dumps(response), 'utf-8'))
         dbcon.close()
 
