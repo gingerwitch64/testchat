@@ -3,9 +3,10 @@ import json
 from uuid import uuid4
 
 class Client:
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, autoconnect=False):
         self.ip = ip
         self.port = port
+        self.autoconnect = autoconnect
         self.socket = None
         self.username = None
         self.uuid = None
@@ -28,6 +29,8 @@ class Client:
         if self.socket is None: 
             print("Client not connected to socket")
             return 1
+        if self.autoconnect:
+            self.connect()
         uuid = uuid4().hex
 
         data = {
@@ -57,7 +60,9 @@ class Client:
         if self.socket is None: 
             print("Client not connected to socket")
             return 1
-        
+        if self.autoconnect:
+            self.connect()
+
         data = {
             "type": "MESSAGE",
             "userid": self.uuid,
@@ -80,7 +85,9 @@ class Client:
         if self.socket is None: 
             print("Client not connected to socket")
             return -1
-        
+        if self.autoconnect:
+            self.connect()
+
         data = {
             "type": "FETCH",
             "since": since,
