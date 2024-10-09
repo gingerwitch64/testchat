@@ -53,9 +53,9 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     "messages": [],
                     "status": 0,
                 }
-                if "since" in data:
+                if "since" in data and data["since"] is not None:
                     response["messages"] = dbcur.execute("SELECT * FROM messages WHERE Timestamp >= ?", (data["since"],)).fetchall()
-                elif "last" in data:
+                elif "last" in data and data["last"] is not None:
                     response["messages"] = dbcur.execute("SELECT * FROM messages ORDER BY Timestamp DESC LIMIT ?", (int(data["last"]),)).fetchall()
                 else:
                     response["messages"] = dbcur.execute("SELECT * FROM messages ORDER BY Timestamp DESC LIMIT 1").fetchall()
