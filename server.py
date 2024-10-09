@@ -70,7 +70,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
 
-def main(host="localhost",port=5500):
+def main(host="",port=5500):
     if not os.path.isfile(SQLITE_FILEPATH):
         print( "Database file does not exist...\n",
               f"Setting up \'{SQLITE_FILEPATH}\' now...\n")
