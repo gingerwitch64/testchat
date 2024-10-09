@@ -32,6 +32,15 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     "status": (userTaken * 1), # convert the result bool into an integer status code
                 }
 
+            case "URG" | "UNREGISTER" | "DRG" | "DEREGISTER":
+                userEntry = dbcur.execute("SELECT * FROM users WHERE UserName=? AND UserID=?", (data["username"], data["userid"])).fetchall()
+                if len(userEntry) == 1:
+                    dbcur.execute("DELETE FROM users WHERE UserName=? AND UserID=?", (data["username"], data["userid"]))
+                response = {
+                    "type": "DRG",
+                    "status": ( (len(userEntry) != 1) * 1 ), # if there was not 1 userEntry, return error
+                }
+
             case "MSG" | "MESSAGE":
                 username = dbcur.execute("SELECT UserName FROM users WHERE UserID=?", (data["userid"],)).fetchone()
                 useridDNE = username is None # UserID Does Not Exist?
@@ -59,6 +68,13 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     response["messages"] = dbcur.execute("SELECT * FROM messages ORDER BY Timestamp DESC LIMIT ?", (int(data["last"]),)).fetchall()
                 else:
                     response["messages"] = dbcur.execute("SELECT * FROM messages ORDER BY Timestamp DESC LIMIT 1").fetchall()
+
+            case _:
+                print("ERROR:", self.client_address, "used an unknown request header:", data["type"])
+                response = {
+                    "type": "ERR",
+                    "desc": "Your client submitted an invalid request type."
+                }
 
         cur_thread = threading.current_thread()
         print("Replying to ", response["type"], f" on {cur_thread}")
