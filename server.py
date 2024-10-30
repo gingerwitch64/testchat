@@ -6,6 +6,7 @@ import socketserver
 import sqlite3
 import time
 
+
 SQLITE_FILEPATH = "server.db"
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
